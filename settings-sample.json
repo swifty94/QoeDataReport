@@ -1,7 +1,7 @@
 {
     "qoeMonitoringName": "YourQoeMonitoringName",
     "trDbString": {
-        "host": "10.146.83.61",
+        "host": "localhost",
         "user": "ftacs",
         "password": "ftacs",
         "database": "ftacs"
