@@ -1,0 +1,40 @@
+{
+    "qoeMonitoringName": "YourQoeMonitoringName",
+    "trDbString": {
+        "host": "10.146.83.61",
+        "user": "ftacs",
+        "password": "ftacs",
+        "database": "ftacs"
+    },
+    "qoeDbString": "clickhouse://localhost",
+    "qoeDbSchema": "ftacs_qoe_ui_data",
+    "reportFilePath": "/root/QoEDataReport_v1/",
+    "smtpHost": "smtp.somesite.com",
+    "smpthUser": "user@somesite.com",
+    "smpthPassword": "password",
+    "smpthPort": 465,
+    "isSmtpEnabled": true,
+    "recipients": ["recipient1@somesite.com","recipient2@somesite.com"],
+    "cpeParameterNames": [
+        {
+            "parameterName": "'InternetGatewayDevice.DeviceInfo.UpTime'",
+            "custName": "UpTime"
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.i.WANEthernetInterfaceConfig.Stats.BytesSent'",
+            "custName": "BytesSent"
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.i.WANEthernetInterfaceConfig.Stats.BytesReceived'",
+            "custName": "BytesReceived"
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.i.WANEthernetInterfaceConfig.Stats.PacketsSent'",
+            "custName": "PacketsSent"
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.i.WANEthernetInterfaceConfig.Stats.PacketsReceived'",
+            "custName": "PacketsReceived"
+        }
+    ]
+}
