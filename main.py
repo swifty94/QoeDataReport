@@ -91,6 +91,7 @@ class Email(object):
                 File attached. \n
                 Best Regards, \n
                 QoeDataReport \n
+                https://github.com/swifty94/QoeDataReport\n
                 """
 
                 HTML = """
@@ -104,7 +105,8 @@ class Email(object):
                     <p>QoE report finished.</p>        
                     <p>File attached</p>  
                     <p>Best Regards,</p>
-                    <p>QoeDataReport</p>       
+                    <p>QoeDataReport</p>
+                    <p>https://github.com/swifty94/QoeDataReport</p>   
                 </div>
                 </body>
                 </html>
