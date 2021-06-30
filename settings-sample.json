@@ -12,7 +12,7 @@
     "smpthUser": "user@somesite.com",
     "smpthPassword": "password",
     "smpthPort": 465,
-    "isSmtpEnabled": true,
+    "isSmtp": true,
     "recipients": ["recipient1@somesite.com","recipient2@somesite.com"],
     "cpeParameterNames": [
         {
