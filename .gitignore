@@ -1,3 +1,4 @@
 log/app.log
 venv/
 settings.json
+reports/*.csv

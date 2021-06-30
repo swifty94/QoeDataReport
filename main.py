@@ -36,9 +36,7 @@ class JsonSettings(object):
             json_value = data[json_key]            
             return json_value
         except Exception as e:
-            logging.error(f'{self.cn} Exception: {e}', exc_info=1)
-        finally:
-            logging.info(f'{self.cn} parsedKey: {json_key}')
+            logging.error(f'{self.cn} Exception: {e}', exc_info=1)        
 
     def updateJson(self, key: str, value: str):
         try:
@@ -88,7 +86,7 @@ class Email(object):
                 TEXT = """      
                 Greetings!    \n
                 QoE report finished \n
-                File attached. \n
+                Report attached\n
                 Best Regards, \n
                 QoeDataReport \n
                 https://github.com/swifty94/QoeDataReport\n
@@ -103,7 +101,7 @@ class Email(object):
                 <div> 
                     <p>Greetings!</p>
                     <p>QoE report finished.</p>        
-                    <p>File attached</p>  
+                    <p>Report attached</p>  
                     <p>Best Regards,</p>
                     <p>QoeDataReport</p>
                     <p>https://github.com/swifty94/QoeDataReport</p>   
@@ -189,7 +187,10 @@ class FTDataProcessor(JsonSettings):
             qoe_monitoring_parent = self.mysqlSelect(f"select id from qoe_monitoring_parent where name = '{self.qoename}'")
             par_id = str(qoe_monitoring_parent).replace('[','').replace(']','').replace('\'','')
             par_id = int(par_id)            
-            cpe_serials = self.mysqlSelect(f"select serial from cpe c, qoe_cpe_in_monitor q where c.id=q.cpe_id and monitoring_id={par_id};")
+            qoe_monitoring_id = self.mysqlSelect(f"select group_id from qoe_monitoring where parent_id = {par_id}")
+            qoe_monitoring_id = str(qoe_monitoring_id).replace('[','').replace(']','').replace('\'','')
+            qoe_monitoring_id = int(qoe_monitoring_id)
+            cpe_serials = self.mysqlSelect(f"select serial from qoe_cpe where group_id={qoe_monitoring_id};")
             return cpe_serials
         except Exception as e:
             logging.error(f'{self.cn} error {e}', exc_info=1)            
@@ -200,6 +201,7 @@ class FTDataProcessor(JsonSettings):
         try:
             cpe_serials = str(self.getCpeSerials()).replace('[','(').replace(']',')').replace('"','')
             parameter_name_ids = self.mysqlSelect(f"select distinct(name_id) from qoe_cpe_parameter where serial IN {cpe_serials}")
+            parameter_name_ids = [int(x) for x in parameter_name_ids]
             return parameter_name_ids
         except Exception as e:
             logging.error(f'{self.cn} error {e}', exc_info=1)
@@ -223,27 +225,41 @@ class FTDataProcessor(JsonSettings):
             for parameter in self.getParameterNames():
                 item = {"parameterName": "", "custName": ""}                
                 item["parameterName"] = parameter                
-                final_list.append(item)                
+                final_list.append(item)             
             self.updateJson("cpeParameterNames",final_list)
         except Exception as e:
             logging.error(f'{self.cn} error {e}', exc_info=1)
         finally:
-            logging.info(f'{self.cn} updated cpeParameterNames in settings.json')
+            logging.info(f'{self.cn} updated cpeParameterNames in settings.json')    
 
     def getQoeDbValue(self) -> list:
+        
         try:
             values = []
-            nids = self.getParameterNameIds()
-            for serial in self.getCpeSerials():                
-                sql = f"SELECT serial, created, value  FROM {self.qoeSchema}.cpe_data WHERE name_id IN {tuple(nids)} AND serial = {serial} AND created >= toDateTime('{self._today()}') ORDER BY created ASC"                
-                kpiValue = self.clickhouseSelect(sql)                
-                values.append(kpiValue)                
+            kpiNames = []
+            qoeParams = self.parseJson("cpeParameterNames")            
+            for param in qoeParams:
+                name = param["custName"]                
+                kpiNames.append(name)
+
+            name_ids = self.getParameterNameIds()            
+            for serial in self.getCpeSerials():                                
+                sql_begin = "SELECT serial, created, value, name_id, multiIf("
+                sql_end = f" FROM {self.qoeSchema}.cpe_data WHERE name_id IN {tuple(name_ids)} AND serial = {serial} AND created >= toDateTime('{self._today()}') ORDER BY created ASC"
+                for name_id, kpi_name in zip(name_ids,kpiNames):          
+                    part = f"name_id = {name_id}, '{kpi_name}',"
+                    sql_begin = sql_begin + part
+                sql_begin = sql_begin + " 'Null value') as kpi"
+                sql_full = sql_begin + sql_end
+                logging.info(f'{self.cn} ClickhouseSqlQuery: {sql_full}')
+                kpiValue = self.clickhouseSelect(sql_full)                
+                values.append(kpiValue)
             return values
         except Exception as e:
             logging.error(f'{self.cn} error {e}', exc_info=1)
         finally:
-            logging.info(f'{self.cn} data processed')
-
+            logging.info(f'{self.cn} data processed')        
+        
 
 class Report(JsonSettings):
     def __init__(self):
@@ -259,50 +275,69 @@ class Report(JsonSettings):
                 csvColumns.append(column)
             return csvColumns
         except Exception as e:
-            logging.error(f'{self.cn} error {e}', exc_info=1)
+            logging.error(f'{self.cn} error {e}', exc_info=1)        
+
+    def cpeDataTupleList(self) -> list:        
+        try:
+            fullData = []
+            uniq = []
+            FTData = FTDataProcessor()
+            dataValues = FTData.getQoeDbValue()
+            for item in dataValues:
+                for x in item:
+                    uniq = tuple(uniq)                    
+                    if x[0] not in uniq and x[1] not in uniq and x[2] not in uniq:
+                        uniq += (x[0],)
+                        uniq += (x[1],)
+                        uniq += ({x[4]:x[2]},)
+                    elif x[0] in uniq and x[1] in uniq and x[2] not in uniq:
+                        uniq += ({x[4]:x[2]},)
+                    elif x[0] in uniq and x[1] not in uniq:                        
+                        fullData.append(uniq)
+                        uniq = list(uniq)
+                        uniq[:] = []
+                        continue
+            return fullData
+        except Exception as e:
+            logging.error(f'{self.cn} error {e}', exc_info=1)        
         finally:
-            logging.info(f'{self.cn} csvColumns obtained')
-                   
+            logging.info(f'{self.cn} created cpeDataTupleList')
+                           
+    def createCpeModel(self) -> dict:
+        try:
+            keys = self.csvColumns()
+            cpeModel = {}
+            for k in keys:
+                cpeModel[k] = "Null"
+            return cpeModel
+        except Exception as e:
+            logging.error(f'{self.cn} error {e}', exc_info=1)        
+
     def createFullDataModel(self) -> list:
         try:
-            fullDataModel = []            
-            kpiNames = []
-            kpiValues = []
-            kpiSerials = []
-            kpiDates = []
-            dataModel = {}
-            FTData = FTDataProcessor()
-            dataValues = FTData.getQoeDbValue()            
-            qoeParams = self.parseJson("cpeParameterNames")
+            fullDataModel = []
+            cpeDataTupleList = self.cpeDataTupleList()
+            for i in cpeDataTupleList:
+                cpeModel = self.createCpeModel()                                
+                serial = i[0]
+                timestamp = i[1]
+                tup_len = len(i)
+                kpis = i[2:tup_len]
+                for model_key in cpeModel.keys():                    
+                    cpeModel["Serial"] = serial
+                    cpeModel["Timestamp"] = timestamp                    
+                    for d in kpis:
+                        for key,value in d.items():
+                            if model_key in d.keys():                                
+                                val = d[model_key]                                
+                                cpeModel[model_key] = val                
+                fullDataModel.append(cpeModel)
             
-            for param in qoeParams:
-                name = param["custName"]
-                kpiNames.append(name)
-                                
-            for item in dataValues:
-                for subitem in item:
-                    value = subitem[2]
-                    serial = subitem[0]
-                    time = str(subitem[1])
-                    kpiValues.append(value)
-                    kpiSerials.append(serial)
-                    kpiDates.append(time)                    
-            
-            for s in kpiSerials:
-                dataModel["Serial"] = s
-                fullDataModel.append(dataModel)
-            
-            for d in fullDataModel:
-                for t in kpiDates:
-                    d["Timestamp"] = t.replace(' ','_').replace(':','_')
-                for n,v in zip(kpiNames, kpiValues):
-                    d[n] = v                    
-
             return fullDataModel
         except Exception as e:
             logging.error(f'{self.cn} error {e}', exc_info=1)
         finally:
-            logging.info(f'{self.cn} collected FullDataModel')
+            logging.info(f'{self.cn} created FullDataModel')
 
     def write(self) -> str:
         try:
@@ -329,31 +364,30 @@ class Report(JsonSettings):
             logging.error(f'{self.cn} Excetion: {Exception}', exc_info=1)
         finally:
             logging.info(f'{self.cn} Finished creating CSV')
-    
-    def serve(self):
-        pass
-
 
 class UserInterface(Report):
     def __init__(self):
         super().__init__()
+        self.cn = __class__.__name__
         self.FTData = FTDataProcessor()
         self.Mail = Email()
 
     def cli_runner(self) -> None:        
         try:            
-            cli_arg = sys.argv[1]
-            if cli_arg == 'init':
+            cli_arg = sys.argv[1]            
+            logging.info(f"{self.cn} Received CLI argument: {cli_arg}")
+            logging.info(f"{self.cn} Started processing")
+            if cli_arg == 'init':                
                 self.FTData.getKpiNames()
                 print('\nTR parameter names obtained.')
                 print('\nPlease update settings.json with respective KPI names')
                 print('\nOnce it is done. You can run:')
                 print('- ~$ python3 main.py report  // instant report creating and sending it (if defined in settings.json)')
-                exit(0)
+                exit(0)                
             elif cli_arg == 'report':
                 try:
                     report = self.write()
-                    self.Mail.send(report)
+                    self.Mail.send(report)                                
                     exit(0)
                 except Exception as err:
                     print(f"Exception: {err}")
@@ -369,6 +403,9 @@ class UserInterface(Report):
         except KeyboardInterrupt as k:
             print("UserKeyboardInterrupt event received. Bye!")
             exit(0)
+        finally:
+            logging.info(f"{self.cn} Finished processing")
 
-UserInterface = UserInterface()
-UserInterface.cli_runner()
+if __name__ == "__main__":
+    UserInterface = UserInterface()
+    UserInterface.cli_runner()
