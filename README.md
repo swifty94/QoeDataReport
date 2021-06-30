@@ -1,6 +1,6 @@
 # QoeDataReport
 
-... Automated creating of CSV report with FT QoE monitoring data for specific monitoring.
+Automated creating of CSV report with the monitoring data from FT QoE module for specific CPE monitoring.
 ---
 
 Installation:
@@ -66,3 +66,11 @@ drwxr-xr-x 7 root root 310 Jun 30 19:30 ..
 -rw------- 1 root root 61K Jun 30 19:30 server_01_com_Export_2021_06_30_19-30_13_SAST.csv
 (venv) [server-01.com:~/QoeDataReport_v1]#
 </pre>
+
+- Email notification example:
+
+![](https://raw.githubusercontent.com/swifty94/QoeDataReport/master/img/report.png)
+
+- Report data example:
+
+![](https://raw.githubusercontent.com/swifty94/QoeDataReport/master/img/email.png)
