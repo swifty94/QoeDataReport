@@ -7,8 +7,7 @@
         "database": "ftacs"
     },
     "qoeDbString": "clickhouse://localhost",
-    "qoeDbSchema": "ftacs_qoe_ui_data",
-    "reportFilePath": "/root/QoEDataReport_v1/",
+    "qoeDbSchema": "ftacs_qoe_ui_data",    
     "smtpHost": "smtp.somesite.com",
     "smpthUser": "user@somesite.com",
     "smpthPassword": "password",
