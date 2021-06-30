@@ -79,7 +79,7 @@ class Email(object):
                 timezone = time.tzname[0]
                 now = datetime.now()
                 date = now.strftime("%Y_%m_%d_%H-%M_%S")
-                reportPath = self.settings.parseJson("reportFilePath")
+                reportPath = 'reports/'
                 attach_file_name = f"{host}_Export_{date}_{timezone}.csv"                
 
                 # Create the plain-text and HTML version of your message
@@ -130,7 +130,11 @@ class Email(object):
         else:
             logging.info(f"{self.cn} SMTP is not enabled")
     except Exception as e:
-        logging.error(f"{self.cn} Exception {e}", exc_info=1)        
+        logging.error(f"{self.cn} Exception {e}", exc_info=1)
+    except OSError:
+        logging.exception(f"{self.cn} Exception: [Errno 101] Network is unreachable")
+        logging.exception(f"{self.cn} Please validate the connection to your SMTP server")
+        pass
 
 class FTDataProcessor(JsonSettings):
     def __init__(self):
@@ -320,17 +324,19 @@ class Report(JsonSettings):
             for i in cpeDataTupleList:
                 cpeModel = self.createCpeModel()                                
                 serial = i[0]
-                timestamp = i[1]
+                timestamp = str(i[1])
+                timestamp = timestamp.replace(' ','_').replace(':','_')
                 tup_len = len(i)
-                kpis = i[2:tup_len]
+                kpis = i[2:tup_len]                
                 for model_key in cpeModel.keys():                    
                     cpeModel["Serial"] = serial
                     cpeModel["Timestamp"] = timestamp                    
                     for d in kpis:
-                        for key,value in d.items():
-                            if model_key in d.keys():                                
-                                val = d[model_key]                                
-                                cpeModel[model_key] = val                
+                        if type(d) == dict:
+                            for key,value in d.items():
+                                if model_key in d.keys():
+                                    val = d[model_key]
+                                    cpeModel[model_key] = val.replace(" ","")
                 fullDataModel.append(cpeModel)
             
             return fullDataModel
@@ -343,10 +349,11 @@ class Report(JsonSettings):
         try:
             logging.info(f'{self.cn} Started creating CSV')
             hostname = socket.gethostname()
+            hostname = hostname.replace('.','_').replace('-','_').replace('_csv','.csv')
             timezone = time.tzname[0]
             now = datetime.now()
             date = now.strftime("%Y_%m_%d_%H-%M_%S")
-            reportPath = self.parseJson("reportFilePath")
+            reportPath = 'reports/'
             csvName = f"{hostname}_Export_{date}_{timezone}.csv"
             csvFile = reportPath + csvName
             csvColumns = self.csvColumns()
