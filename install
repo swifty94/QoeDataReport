@@ -1,5 +1,11 @@
 #!/bin/bash
 python3 -m venv venv
 source venv/bin/activate && sleep 1
+mkdir log
+mkdir reports
+echo "Created folders: log/ reports/"
 cd lib
+echo "Installing dependencies"
 pip3 install * -f ./ --no-index && sleep 1
+echo "Done!"
+exit 0
