@@ -449,7 +449,7 @@ class UserInterface(Report):
             print('- ~$ python3 main.py report  // creating of reports and sending them via email (if defined in settings.json)\n')
             exit(1)
         except KeyboardInterrupt as k:
-            print("UserKeyboardInterrupt event received.")
+            print("UserKeyboardInterrupt event received. Bye!")
             exit(0)
         finally:
             logging.info(f"{self.cn} Finished processing")
