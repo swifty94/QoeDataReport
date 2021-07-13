@@ -26,7 +26,8 @@ Done!
 
 
 Usage:
----    
+---
+- Make sure your QoE monitoring in the CPEAdmin is actively running!
 - copy or rename settings-sample.json to settings.json
 - put your own details in each respective tag, example:
 <pre>

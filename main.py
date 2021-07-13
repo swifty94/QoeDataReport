@@ -233,7 +233,7 @@ class FTDataProcessor(JsonSettings):
             qoe_monitoring_id = self.mysqlSelect(f"select group_id from qoe_monitoring where parent_id = {par_id}")
             qoe_monitoring_id = str(qoe_monitoring_id).replace('[','').replace(']','').replace('\'','')
             qoe_monitoring_id = int(qoe_monitoring_id)
-            cpe_serials = self.mysqlSelect(f"select serial from qoe_cpe where group_id={qoe_monitoring_id};")
+            cpe_serials = self.mysqlSelect(f"select serial from qoe_cpe where group_id={qoe_monitoring_id};")            
             return cpe_serials
         except Exception as e:
             logging.error(f'{self.cn} error {e}', exc_info=1)            
