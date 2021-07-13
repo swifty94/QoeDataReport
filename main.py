@@ -364,7 +364,7 @@ class Report(JsonSettings):
                 cpeModel = self.createCpeModel()                                
                 serial = i[0]
                 timestamp = str(i[1])
-                timestamp = timestamp.replace(' ','_').replace(':','_')
+                timestamp = timestamp
                 tup_len = len(i)
                 kpis = i[2:tup_len]                
                 for model_key in cpeModel.keys():                    
@@ -398,8 +398,8 @@ class Report(JsonSettings):
             csvColumns = self.csvColumns()
             csvData = self.createFullDataModel()
             logging.info(f'{self.cn} Items to be processed - {len(csvData)}')            
-            with open(csvFile, 'w') as f:
-                writer = csv.DictWriter(f, fieldnames=csvColumns)
+            with open(csvFile, 'w', newline='') as f:
+                writer = csv.DictWriter(f, delimiter=',', quoting=csv.QUOTE_NONNUMERIC, lineterminator='\n', fieldnames=csvColumns)
                 writer.writeheader()
                 for data in csvData:
                     writer.writerow(data)
