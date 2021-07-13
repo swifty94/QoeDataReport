@@ -7,13 +7,17 @@
         "database": "ftacs"
     },
     "qoeDbString": "clickhouse://localhost",
-    "qoeDbSchema": "ftacs_qoe_ui_data",    
+    "qoeDbSchema": "ftacs_qoe_ui_data",
+    "isSmtp": true,
     "smtpHost": "smtp.somesite.com",
     "smpthUser": "user@somesite.com",
     "smpthPassword": "password",
     "smpthPort": 465,
-    "isSmtp": true,
     "recipients": ["recipient1@somesite.com","recipient2@somesite.com"],
+    "isFtp": true,
+    "ftpHost": "ftp.site.com",
+    "ftpUser": "ftpuser",
+    "ftpPass": "ftppassword",
     "cpeParameterNames": [
         {
             "parameterName": "'InternetGatewayDevice.DeviceInfo.UpTime'",
