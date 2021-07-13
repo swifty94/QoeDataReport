@@ -13,6 +13,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
+import ftplib
 
 log_file_path = path.join(path.dirname(path.abspath(__file__)), 'logging.ini')
 logging.config.fileConfig(log_file_path)
@@ -52,9 +53,44 @@ class JsonSettings(object):
         finally:
             logging.info(f'{self.cn} updatedJson with key: {key} value: {value}')
 
+
+class FTP(object):
+    """
+    Class for reporting data vie FTP once job is finished
+    """
+    def __init__(self):
+        super().__init__()
+        self.cn = __class__.__name__
+        self.settings = JsonSettings()
+        self.IS_FTP = self.settings.parseJson("isFtp")
+        self.FTP_HOST = self.settings.parseJson("ftpHost")
+        self.FTP_USER = self.settings.parseJson("ftpUser")
+        self.FTP_PASS = self.settings.parseJson("ftpPass")
+    
+    def send(self, report_file):
+        try:
+            if self.IS_FTP:
+                logging.info(f"{self.cn} FTP is enabled")
+                logging.info(f"{self.cn} Attempt to send the file to {self.FTP_HOST}")
+                session = ftplib.FTP(self.FTP_HOST, self.FTP_USER, self.FTP_PASS)            
+                file_to_send = open(report_file,'rb')
+                file_name = report_file.replace("reports/", "")
+                session.storbinary(f'STOR {file_name}', file_to_send)
+                file_to_send.close()
+                filelist = session.nlst()
+                for fn in filelist:
+                    if file_name in fn:
+                        logging.info(f"{self.cn} FTP: {fn} transferred")
+                        logging.info(f"{self.cn} FTP: Success!")                    
+                session.quit()                
+            else:
+                logging.info(f"{self.cn} FTP is not enabled")
+        except Exception as e:
+            logging.error(f"{self.cn} Exception {e}", exc_info=1)     
+
 class Email(object):
   """
-  Class for reporting data once job is finished
+  Class for reporting data via email once job is finished
   """
   def __init__(self):
     self.cn = __class__.__name__
@@ -381,6 +417,7 @@ class UserInterface(Report):
         self.cn = __class__.__name__
         self.FTData = FTDataProcessor()
         self.Mail = Email()
+        self.Ftp = FTP()
 
     def cli_runner(self) -> None:        
         try:            
@@ -397,7 +434,8 @@ class UserInterface(Report):
             elif cli_arg == 'report':
                 try:
                     report = self.write()
-                    self.Mail.send(report)                                
+                    self.Mail.send(report)
+                    self.Ftp.send(report)                               
                     exit(0)
                 except Exception as err:
                     print(f"Exception: {err}")
