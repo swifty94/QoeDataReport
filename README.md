@@ -1,11 +1,11 @@
 # QoeDataReport
 
-Automated creating of CSV report with the monitoring data from FT QoE module for specific CPE monitoring.
+Automated creating of CSV report using QoE data from FT QoE module.
 ---
 
 Installation:
 ---
-- clone this repo or download as is
+- git clone this repo or download as is in zip
 - unzip on target location
 - run ./install, E.g:
 
@@ -27,14 +27,56 @@ Done!
 
 Usage:
 ---    
-- rename settings-sample.json to settings.json
-- put your own details in each respective tag
-- source venv/bin/activate
-- python3 main.py init
-- check settings.json and put the convenient "custName" for each "parameterName"
-- python3 main.py report &
+- copy or rename settings-sample.json to settings.json
+- put your own details in each respective tag, example:
+<pre>
+{
+    "qoeMonitoringName": "YourQoeMonitoringName",           // name of the QoE monitoring fro CPEAdmin
+    "trDbString": {                                         // connection string to FT DB (MySQL)
+        "host": "localhost",
+        "user": "ftacs",
+        "password": "ftacs",
+        "database": "ftacs"
+    },
+    "qoeDbString": "clickhouse://localhost",                // connection string to ClickHouse DB
+    "qoeDbSchema": "ftacs_qoe_ui_data",                     // name of the QoE schema (default name is already there)
+    "isSmtp": true,                                         // email notification if "false" -> disabled
+    "smtpHost": "smtp.somesite.com",                        // SMTP server, e.g., smtp.gmail.com
+    "smpthUser": "user@somesite.com",                       // email address
+    "smpthPassword": "password",                            // password from email above
+    "smpthPort": 465,                                       // SMTP port
+    "recipients": ["recipient1@somesite.com","recipient2@somesite.com"] // where to send the reports, separated by comas
+    "isFtp": true,                                          // upload to FTP server. "false" - disabled              
+    "ftpHost": "ftp.site.com",                              // FTP server
+    "ftpUser": "ftpuser",                                   // FTP user
+    "ftpPass": "ftppassword",                               // FTP password
+    "cpeParameterNames": [                                  // Array of TR parameter and their handy names
 
-Example:
+    // Empty by default. Automatically populated once "init" was executed. 
+        {
+            "parameterName": "'InternetGatewayDevice.DeviceInfo.UpTime'",    // TR-069 parameter name
+            "custName": "UpTime"                                             // Your KPI/column name
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.i.WANEthernetInterfaceConfig.Stats.BytesSent'",
+            "custName": "BytesSent"
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.i.WANEthernetInterfaceConfig.Stats.BytesReceived'",
+            "custName": "BytesReceived"
+        },        
+    ]
+}
+</pre>
+
+- Execute: source venv/bin/activate
+- Execute: python3 main.py init
+- Check settings.json and put the convenient "custName" for each "parameterName"
+- Execute: python3 main.py report to get the data 
+
+- If you want to create several reports simultaneously, you either need to have 2 separate project directories or have 2 separate settings.json files which you'll be switching manually.
+
+Usage example:
 ---
 <pre>
 [server-01.com:~/QoeDataReport_v1]# source venv/bin/activate
@@ -66,11 +108,3 @@ drwxr-xr-x 7 root root 310 Jun 30 19:30 ..
 -rw------- 1 root root 61K Jun 30 19:30 server_01_com_Export_2021_06_30_19-30_13_SAST.csv
 (venv) [server-01.com:~/QoeDataReport_v1]#
 </pre>
-
-- Email notification example:
-
-![](https://raw.githubusercontent.com/swifty94/QoeDataReport/master/img/report.png)
-
-- Report data example:
-
-![](https://raw.githubusercontent.com/swifty94/QoeDataReport/master/img/email.png)
