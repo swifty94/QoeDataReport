@@ -56,7 +56,7 @@ class JsonSettings(object):
 
 class FTP(object):
     """
-    Class for reporting data vie FTP once job is finished
+    Class for reporting data via FTP once job is finished
     """
     def __init__(self):
         super().__init__()
