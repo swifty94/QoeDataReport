@@ -1,4 +1,5 @@
-log/app.log
+log/
+*.csv
 venv/
 settings.json
-reports/*.csv
+reports/

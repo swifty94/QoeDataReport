@@ -118,23 +118,26 @@ class Email(object):
                 part1 = MIMEText(TEXT, "plain")
                 part2 = MIMEText(HTML, "html")      
                 message.attach(part1)
-                message.attach(part2)                
+                message.attach(part2)                         
                 context = ssl._create_unverified_context()
                 with smtplib.SMTP_SSL(self.SMTP_HOST, self.SMTP_PORT, context=context) as server:
                     server.login(self.SMTP_USER, self.SMTP_PASS)
-                    logging.info(f"{self.cn} SMTP session established")
-                    server.sendmail(self.SMTP_USER, receiver, message.as_string())
-                    logging.info(f'{self.cn} Email sent ')
-                    server.quit()  
+                    status = server.noop()[0]
+                    if status == 250:
+                        logging.info(f"{self.cn} SMTP session: Established")
+                        server.sendmail(self.SMTP_USER, receiver, message.as_string())
+                        logging.info(f'{self.cn} Email sent ')
+                        server.quit()                                                               
+                    else:
+                        logging.info(f"{self.cn} SMTP session: Failed")
+                        logging.exception(f"{self.cn} Error occured during either establising SMTP session or sending an email")
+                        logging.exception(f"{self.cn} Please validate the connection to your SMTP server and/or your credentials")
+                        pass
                     os.remove(attach_file_name)
         else:
             logging.info(f"{self.cn} SMTP is not enabled")
     except Exception as e:
-        logging.error(f"{self.cn} Exception {e}", exc_info=1)
-    except OSError:
-        logging.exception(f"{self.cn} Exception: [Errno 101] Network is unreachable")
-        logging.exception(f"{self.cn} Please validate the connection to your SMTP server")
-        pass
+        logging.error(f"{self.cn} Exception {e}", exc_info=1)    
 
 class FTDataProcessor(JsonSettings):
     def __init__(self):
@@ -272,7 +275,7 @@ class Report(JsonSettings):
 
     def csvColumns(self) -> list:
         try:
-            csvColumns = ["Serial","Timestamp"]
+            csvColumns = ["ESN","CollectTime"]
             qoeParams = self.parseJson("cpeParameterNames")
             for param in qoeParams:
                 column = param["custName"]
@@ -329,8 +332,8 @@ class Report(JsonSettings):
                 tup_len = len(i)
                 kpis = i[2:tup_len]                
                 for model_key in cpeModel.keys():                    
-                    cpeModel["Serial"] = serial
-                    cpeModel["Timestamp"] = timestamp                    
+                    cpeModel["ESN"] = serial
+                    cpeModel["CollectTime"] = timestamp                    
                     for d in kpis:
                         if type(d) == dict:
                             for key,value in d.items():
