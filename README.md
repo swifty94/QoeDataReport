@@ -39,6 +39,15 @@ Usage:
         "password": "ftacs",
         "database": "ftacs"
     },
+    "collectDateRange": false,                              // if collectDateRange=true -> dateRange must be specified
+                                                                otherwise data will be collected only for the current day
+
+    "dateRange": [                                          // Array of date/time range for data collection
+                                                            // ['begin_date_time', 'end_date_time']
+        "YYYY-MM-DD HH:MM:SS",
+        "YYYY-MM-DD HH:MM:SS"
+    ],
+    
     "qoeDbString": "clickhouse://localhost",                // connection string to ClickHouse DB
     "qoeDbSchema": "ftacs_qoe_ui_data",                     // name of the QoE schema (default name is already there)
     "isSmtp": true,                                         // email notification if "false" -> disabled

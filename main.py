@@ -19,14 +19,17 @@ log_file_path = path.join(path.dirname(path.abspath(__file__)), 'logging.ini')
 logging.config.fileConfig(log_file_path)
 
 class JsonSettings(object):
-
+    """
+    Class for get/set data from/to *.json\n
+    Default filename for __init__() is settings.json
+    """
     def __init__(self, json_file="settings.json"):
         self.json_file = json_file
         self.cn = __class__.__name__
         
     def parseJson(self, json_key: str) -> Union[List, AnyStr]:
         """
-        :Accepts JSON file (path) and key as argument (both are type of String)\n
+        :param str json_key - key to look for in file \n
         :Return either List or String of respective values from settings
         """
         
@@ -39,7 +42,12 @@ class JsonSettings(object):
         except Exception as e:
             logging.error(f'{self.cn} Exception: {e}', exc_info=1)        
 
-    def updateJson(self, key: str, value: str):
+    def updateJson(self, key: str, value: str) -> None:
+        """
+        Void method
+        :param str key - key for the respective value pair as second param
+        :param str value - value         
+        """
         try:
             with open(self.json_file) as f:
                 json_decoded = json.load(f)
@@ -67,7 +75,11 @@ class FTP(object):
         self.FTP_USER = self.settings.parseJson("ftpUser")
         self.FTP_PASS = self.settings.parseJson("ftpPass")
     
-    def send(self, report_file):
+    def send(self, report_file: str) -> None:
+        """
+        Void method
+        :param str report_file - path to file for sending
+        """
         try:
             if self.IS_FTP:
                 logging.info(f"{self.cn} FTP is enabled")
@@ -102,7 +114,11 @@ class Email(object):
     self.SMTP_PASS = self.settings.parseJson("smtpPass")
     self.RECEPIENTS = self.settings.parseJson("recipients")
 
-  def send(self, attach):
+  def send(self, attach: str) -> None:
+    """
+    Void method
+    :param str attach - path to attachment for the email
+    """
     try:        
         if self.IS_SMTP:
             for receiver in self.RECEPIENTS:                
@@ -176,6 +192,10 @@ class Email(object):
         logging.error(f"{self.cn} Exception {e}", exc_info=1)    
 
 class FTDataProcessor(JsonSettings):
+    """
+    Class for collecting and processing data for a specific QoE monitoring\n
+    defined in the settings.json 
+    """
     def __init__(self):
         super().__init__()
         self.cn = __class__.__name__        
@@ -280,7 +300,9 @@ class FTDataProcessor(JsonSettings):
         try:
             values = []
             kpiNames = []
-            qoeParams = self.parseJson("cpeParameterNames")            
+            qoeParams = self.parseJson("cpeParameterNames")
+            isDateRange = self.parseJson("collectDateRange")
+
             for param in qoeParams:
                 name = param["custName"]                
                 kpiNames.append(name)
@@ -288,7 +310,14 @@ class FTDataProcessor(JsonSettings):
             name_ids = self.getParameterNameIds()            
             for serial in self.getCpeSerials():                                
                 sql_begin = "SELECT serial, created, value, name_id, multiIf("
-                sql_end = f" FROM {self.qoeSchema}.cpe_data WHERE name_id IN {tuple(name_ids)} AND serial = {serial} AND created >= toDateTime('{self._today()}') ORDER BY created ASC"
+                if isDateRange:
+                    datesList = self.parseJson("dateRange")
+                    logging.info(f'{self.cn} isDateRange={isDateRange}')
+                    begin, end = datesList[0], datesList[1]
+                    logging.info(f'{self.cn} begin={begin} end={end}')
+                    sql_end = f" FROM {self.qoeSchema}.cpe_data WHERE name_id IN {tuple(name_ids)} AND serial = {serial} AND created >= toDateTime('{begin}') AND created <= toDateTime('{end}') ORDER BY created ASC"
+                else:
+                    sql_end = f" FROM {self.qoeSchema}.cpe_data WHERE name_id IN {tuple(name_ids)} AND serial = {serial} AND created >= toDateTime('{self._today()}') ORDER BY created ASC"
                 for name_id, kpi_name in zip(name_ids,kpiNames):          
                     part = f"name_id = {name_id}, '{kpi_name}',"
                     sql_begin = sql_begin + part
@@ -305,6 +334,10 @@ class FTDataProcessor(JsonSettings):
         
 
 class Report(JsonSettings):
+    """
+    Class for building the final report data model\n
+    and writing it to the CSV
+    """
     def __init__(self):
         super().__init__()
         self.cn = __class__.__name__
@@ -412,6 +445,10 @@ class Report(JsonSettings):
             logging.info(f'{self.cn} Finished creating CSV')
 
 class UserInterface(Report):
+    """
+    Class with a single method for interraction with user\n
+    using the CLI
+    """
     def __init__(self):
         super().__init__()
         self.cn = __class__.__name__
@@ -455,5 +492,5 @@ class UserInterface(Report):
             logging.info(f"{self.cn} Finished processing")
 
 if __name__ == "__main__":
-    UserInterface = UserInterface()
-    UserInterface.cli_runner()
+    Interface = UserInterface()
+    Interface.cli_runner()
