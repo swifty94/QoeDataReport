@@ -312,9 +312,7 @@ class FTDataProcessor(JsonSettings):
                 sql_begin = "SELECT serial, created, value, name_id, multiIf("
                 if isDateRange:
                     datesList = self.parseJson("dateRange")
-                    logging.info(f'{self.cn} isDateRange={isDateRange}')
-                    begin, end = datesList[0], datesList[1]
-                    logging.info(f'{self.cn} begin={begin} end={end}')
+                    begin, end = datesList[0], datesList[1]                    
                     sql_end = f" FROM {self.qoeSchema}.cpe_data WHERE name_id IN {tuple(name_ids)} AND serial = {serial} AND created >= toDateTime('{begin}') AND created <= toDateTime('{end}') ORDER BY created ASC"
                 else:
                     sql_end = f" FROM {self.qoeSchema}.cpe_data WHERE name_id IN {tuple(name_ids)} AND serial = {serial} AND created >= toDateTime('{self._today()}') ORDER BY created ASC"
