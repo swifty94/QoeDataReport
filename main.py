@@ -59,7 +59,7 @@ class JsonSettings(object):
         except Exception as e:
             logging.error(f'{self.cn} Exception: {e}', exc_info=1)
         finally:
-            logging.info(f'{self.cn} updatedJson with key: {key} value: {value}')
+            logging.info(f'{self.cn} updatedJson key: {key}')
 
 
 class FTP(object):
@@ -249,11 +249,14 @@ class FTDataProcessor(JsonSettings):
         try:            
             qoe_monitoring_parent = self.mysqlSelect(f"select id from qoe_monitoring_parent where name = '{self.qoename}'")
             par_id = str(qoe_monitoring_parent).replace('[','').replace(']','').replace('\'','')
-            par_id = int(par_id)            
+            par_id = int(par_id)
+            logging.info(f'{self.cn} id from qoe_monitoring_parent = {par_id}')     
             qoe_monitoring_id = self.mysqlSelect(f"select group_id from qoe_monitoring where parent_id = {par_id}")
             qoe_monitoring_id = str(qoe_monitoring_id).replace('[','').replace(']','').replace('\'','')
             qoe_monitoring_id = int(qoe_monitoring_id)
-            cpe_serials = self.mysqlSelect(f"select serial from qoe_cpe where group_id={qoe_monitoring_id};")            
+            logging.info(f'{self.cn} group_id from qoe_monitoring = {qoe_monitoring_id}')
+            cpe_serials = self.mysqlSelect(f"select serial from qoe_cpe where group_id={qoe_monitoring_id};")
+            logging.info(f'{self.cn} serial from qoe_cpe count = {len(cpe_serials)}')    
             return cpe_serials
         except Exception as e:
             logging.error(f'{self.cn} error {e}', exc_info=1)            
@@ -263,8 +266,9 @@ class FTDataProcessor(JsonSettings):
     def getParameterNameIds(self) -> list:
         try:
             cpe_serials = str(self.getCpeSerials()).replace('[','(').replace(']',')').replace('"','')
-            parameter_name_ids = self.mysqlSelect(f"select distinct(name_id) from qoe_cpe_parameter where serial IN {cpe_serials}")
+            parameter_name_ids = self.mysqlSelect(f"select distinct(name_id) from qoe_cpe_parameter where serial in {cpe_serials}")
             parameter_name_ids = [int(x) for x in parameter_name_ids]
+            logging.info(f"{self.cn} number of name_id in list {len(parameter_name_ids)}")
             return parameter_name_ids
         except Exception as e:
             logging.error(f'{self.cn} error {e}', exc_info=1)
@@ -275,6 +279,7 @@ class FTDataProcessor(JsonSettings):
         try:
             parameter_name_ids = self.getParameterNameIds()
             parameter_names = self.mysqlSelect(f'select name from qoe_cpe_parameter_name where id in {tuple(parameter_name_ids)}')
+            [logging.info(f'{self.cn} got parameter: {x}') for x in parameter_names]
             return parameter_names
         except Exception as e:
             logging.error(f'{self.cn} error {e}', exc_info=1)
