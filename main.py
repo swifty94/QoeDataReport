@@ -1,18 +1,15 @@
 import mysql.connector
-import re, socket, csv, sys, time, os
+import socket, csv, sys, time, os
 import smtplib, ssl, socket, shutil
 import json
-import base64
 import logging
 import logging.config
 from os import path
-from typing import Dict, List, AnyStr, Union
+from typing import List, AnyStr, Union
 from datetime import datetime, date
 from clickhouse_driver import connect
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email import encoders
 import ftplib
 
 log_file_path = path.join(path.dirname(path.abspath(__file__)), 'logging.ini')
