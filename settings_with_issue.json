@@ -1,0 +1,125 @@
+{
+    "qoeMonitoringName": "Huawei Mobile",
+    "trDbString": {
+        "host": "10.146.46.66",
+        "user": "ftacs",
+        "password": "ftacs",
+        "database": "ftacs"
+    },
+    "collectDateRange": true,
+    "dateRange": [
+        "2021-10-26 00:00:00",
+        "2021-10-28 23:59:59"
+    ],
+    "qoeDbString": "clickhouse://10.146.46.58",
+    "qoeDbSchema": "ftacs_qoe_ui_data",
+    "isSmtp": true,
+    "smtpHost": "smtp.gmail.com",
+    "smtpUser": "developer1swifty@gmail.com",
+    "smtpPass": "swiftydev",
+    "smtpPort": 465,
+    "recipients": [
+        "kirill.rudenko@friendly-tech.com",
+        "kirillrudenko1994@gmail.com"
+    ],
+    "isFtp": false,
+    "ftpHost": "demo.friendly-tech.com",
+    "ftpUser": "test",
+    "ftpPass": "test",
+    "isSftp": false,
+    "SftpHost": "demo.friendly-tech.com",
+    "SftpPath": "",
+    "SftpPort": 22,
+    "SftpUser": "test",
+    "SftpPass": "test",
+    "cpeParameterNames": [
+        {
+            "parameterName": "'InternetGatewayDevice.DeviceInfo.UpTime'",
+            "custName": ""
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.2.X_ATP_WANUMTSInterfaceConfig.DownLoadData'",
+            "custName": ""
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.2.X_ATP_WANUMTSInterfaceConfig.CurrentUpstreamRate'",
+            "custName": ""
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.2.X_ATP_WANUMTSInterfaceConfig.CurrentDownstreamRate'",
+            "custName": ""
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.2.X_ATP_WANUMTSInterfaceConfig.UpstreamMaxRate'",
+            "custName": ""
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.2.X_ATP_WANUMTSInterfaceConfig.SignalQuality'",
+            "custName": ""
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.2.X_ATP_WANUMTSInterfaceConfig.SystemMode'",
+            "custName": ""
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.2.X_ATP_WANUMTSInterfaceConfig.SIMStatus'",
+            "custName": ""
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.2.X_ATP_WANUMTSInterfaceConfig.PLMN'",
+            "custName": ""
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.2.X_ATP_WANUMTSInterfaceConfig.RSRQ'",
+            "custName": ""
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.2.X_ATP_WANUMTSInterfaceConfig.RSRP'",
+            "custName": ""
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.2.X_ATP_WANUMTSInterfaceConfig.RSSI'",
+            "custName": ""
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.2.X_ATP_WANUMTSInterfaceConfig.SINR'",
+            "custName": ""
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.2.X_ATP_WANUMTSInterfaceConfig.RSCP'",
+            "custName": ""
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.2.X_ATP_WANUMTSInterfaceConfig.txpower'",
+            "custName": ""
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.2.X_ATP_WANUMTSInterfaceConfig.Earfcn'",
+            "custName": ""
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.2.X_ATP_WANUMTSInterfaceConfig.UplinkMaxThrp'",
+            "custName": ""
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.2.X_ATP_WANUMTSInterfaceConfig.DownlinkMaxThrp'",
+            "custName": ""
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.2.X_ATP_WANUMTSInterfaceConfig.IMSI'",
+            "custName": ""
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.2.X_ATP_WANUMTSInterfaceConfig.cellID'",
+            "custName": ""
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.2.X_ATP_WANUMTSInterfaceConfig.PCI'",
+            "custName": ""
+        },
+        {
+            "parameterName": "'InternetGatewayDevice.WANDevice.2.X_ATP_WANUMTSInterfaceConfig.IMEI'",
+            "custName": ""
+        }
+    ]
+}

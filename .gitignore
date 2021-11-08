@@ -1,4 +1,6 @@
 log/
+*tksa*
+*dev*
 *.csv
 venv/
 settings.json
