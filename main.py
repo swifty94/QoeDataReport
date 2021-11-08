@@ -36,8 +36,13 @@ class JsonSettings(object):
             
             json_value = data[json_key]            
             return json_value
+        except FileNotFoundError as noF:
+            _l = f"\nCriticalException {noF}\nCreate a proper configuration file out of blueprint using settings-sample.json\nExit!"
+            logging.critical(_l)
+            print(_l)        
+            exit(1)
         except Exception as e:
-            logging.error(f'{self.cn} Exception: {e}', exc_info=1)        
+            logging.error(f'{self.cn} Exception: {e}', exc_info=1)
 
     def updateJson(self, key: str, value: str) -> None:
         """
