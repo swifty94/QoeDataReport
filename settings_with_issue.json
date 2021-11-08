@@ -1,7 +1,7 @@
 {
     "qoeMonitoringName": "Huawei Mobile",
     "trDbString": {
-        "host": "10.146.46.66",
+        "host": "1.1.1.1",
         "user": "ftacs",
         "password": "ftacs",
         "database": "ftacs"
@@ -11,25 +11,25 @@
         "2021-10-26 00:00:00",
         "2021-10-28 23:59:59"
     ],
-    "qoeDbString": "clickhouse://10.146.46.58",
+    "qoeDbString": "clickhouse://1.1.1.1",
     "qoeDbSchema": "ftacs_qoe_ui_data",
     "isSmtp": true,
-    "smtpHost": "smtp.gmail.com",
-    "smtpUser": "developer1swifty@gmail.com",
-    "smtpPass": "swiftydev",
-    "smtpPort": 465,
+    "smtpHost": "some.host.com",
+    "smtpUser": "bla@bla",
+    "smtpPass": "1234123",
+    "smtpPort": 111,
     "recipients": [
-        "kirill.rudenko@friendly-tech.com",
-        "kirillrudenko1994@gmail.com"
+        "bla@bla",
+        "bla@bla"
     ],
     "isFtp": false,
-    "ftpHost": "demo.friendly-tech.com",
+    "ftpHost": "some.host.com",
     "ftpUser": "test",
     "ftpPass": "test",
     "isSftp": false,
-    "SftpHost": "demo.friendly-tech.com",
+    "SftpHost": "some.host.com",
     "SftpPath": "",
-    "SftpPort": 22,
+    "SftpPort": 222,
     "SftpUser": "test",
     "SftpPass": "test",
     "cpeParameterNames": [
