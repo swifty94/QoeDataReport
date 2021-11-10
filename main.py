@@ -5,7 +5,7 @@ import json
 import logging
 import logging.config
 from os import path
-from typing import List, AnyStr, Union
+from typing import List, AnyStr, NoReturn, Union
 from datetime import datetime, date
 from clickhouse_driver import connect
 from email.mime.text import MIMEText
@@ -248,7 +248,10 @@ class FTDataProcessor(JsonSettings):
             qoeConnection.close()
             
     def getCpeSerials(self) -> list:
-        try:            
+        try:
+            #
+            # TODO: change logic according to 6.0.50 schema  
+            #         
             qoe_monitoring_parent = self.mysqlSelect(f"select id from qoe_monitoring_parent where name = '{self.qoename}'")
             par_id = str(qoe_monitoring_parent).replace('[','').replace(']','').replace('\'','')
             par_id = int(par_id)
@@ -461,7 +464,8 @@ class UserInterface(Report):
         self.Mail = Email()
         self.Ftp = FTP()
 
-    def cli_runner(self) -> None:        
+    def listen(self) -> NoReturn:
+        """CLI listener"""
         try:            
             cli_arg = sys.argv[1]            
             logging.info(f"{self.cn} Received CLI argument: {cli_arg}")
@@ -498,4 +502,4 @@ class UserInterface(Report):
 
 if __name__ == "__main__":
     Interface = UserInterface()
-    Interface.cli_runner()
+    Interface.listen()
