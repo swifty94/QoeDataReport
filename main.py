@@ -324,9 +324,9 @@ class FTDataProcessor(JsonSettings):
                 if isDateRange:
                     datesList = self.parseJson("dateRange")
                     begin, end = datesList[0], datesList[1]
-                    sql_end = f" FROM {self.qoeSchema}.cpe_data WHERE name_id IN {tuple(name_ids)} AND serial = {serial} AND created >= toDateTime('{begin}') AND created <= toDateTime('{end}') ORDER BY created ASC"
+                    sql_end = f" FROM {self.qoeSchema}.kpi_data WHERE name_id IN {tuple(name_ids)} AND serial = {serial} AND created >= toDateTime('{begin}') AND created <= toDateTime('{end}') ORDER BY created ASC"
                 else:
-                    sql_end = f" FROM {self.qoeSchema}.cpe_data WHERE name_id IN {tuple(name_ids)} AND serial = {serial} AND created >= toDateTime('{self._today()}') ORDER BY created ASC"
+                    sql_end = f" FROM {self.qoeSchema}.kpi_data WHERE name_id IN {tuple(name_ids)} AND serial = {serial} AND created >= toDateTime('{self._today()}') ORDER BY created ASC"
                 for name_id, kpi_name in zip(name_ids,kpiNames):
                     part = f"name_id = {name_id}, '{kpi_name}',"
                     sql_begin = sql_begin + part
