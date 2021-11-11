@@ -5,7 +5,7 @@ import json
 import logging
 import logging.config
 from os import path
-from typing import List, AnyStr, Union
+from typing import List, AnyStr, NoReturn, Union
 from datetime import datetime, date
 from clickhouse_driver import connect
 from email.mime.text import MIMEText
@@ -36,8 +36,13 @@ class JsonSettings(object):
             
             json_value = data[json_key]            
             return json_value
+        except FileNotFoundError as noF:
+            _l = f"\nCriticalException {noF}\nCreate a proper configuration file out of blueprint using settings-sample.json\nExit!"
+            logging.critical(_l)
+            print(_l)        
+            exit(1)
         except Exception as e:
-            logging.error(f'{self.cn} Exception: {e}', exc_info=1)        
+            logging.error(f'{self.cn} Exception: {e}', exc_info=1)
 
     def updateJson(self, key: str, value: str) -> None:
         """
@@ -241,36 +246,41 @@ class FTDataProcessor(JsonSettings):
             logging.error(f'{self.cn} SQL: \n {query}')    
         finally:
             qoeConnection.close()
-            
-    def getCpeSerials(self) -> list:
-        try:            
+
+    def getMonitoringId(self) -> int:
+        try:
             qoe_monitoring_parent = self.mysqlSelect(f"select id from qoe_monitoring_parent where name = '{self.qoename}'")
             par_id = str(qoe_monitoring_parent).replace('[','').replace(']','').replace('\'','')
             par_id = int(par_id)
-            logging.info(f'{self.cn} id from qoe_monitoring_parent = {par_id}')     
-            qoe_monitoring_id = self.mysqlSelect(f"select group_id from qoe_monitoring where parent_id = {par_id}")
+            logging.info(f'{self.cn} qoe_monitoring_parent_id = {par_id}')     
+            qoe_monitoring_id = self.mysqlSelect(f"select id from qoe_monitoring where parent_id = {par_id}")
             qoe_monitoring_id = str(qoe_monitoring_id).replace('[','').replace(']','').replace('\'','')
             qoe_monitoring_id = int(qoe_monitoring_id)
-            logging.info(f'{self.cn} group_id from qoe_monitoring = {qoe_monitoring_id}')
-            cpe_serials = self.mysqlSelect(f"select serial from qoe_cpe where group_id={qoe_monitoring_id};")
-            logging.info(f'{self.cn} serial from qoe_cpe count = {len(cpe_serials)}')    
+            logging.info(f'{self.cn} monitoring id = {qoe_monitoring_id}')
+            return qoe_monitoring_id
+        except Exception as e:
+            logging.error(f'{self.cn} error {e}', exc_info=1)
+    
+            
+    def getCpeSerials(self) -> list:
+        try:
+            qoe_monitoring_id = self.getMonitoringId()
+            qoe_cpe_in_monitor = self.mysqlSelect(f"select cpe_id from qoe_cpe_in_monitor where monitoring_id = {qoe_monitoring_id};")
+            cpe_serials = self.mysqlSelect(f"select serial from cpe where id in {tuple(qoe_cpe_in_monitor)};")
+            logging.info(f'{self.cn} Serials = {len(cpe_serials)}')
             return cpe_serials
         except Exception as e:
-            logging.error(f'{self.cn} error {e}', exc_info=1)            
-        finally:
-            logging.info(f'{self.cn} processed CpeSerials')
+            logging.error(f'{self.cn} error {e}', exc_info=1)
     
     def getParameterNameIds(self) -> list:
         try:
-            cpe_serials = str(self.getCpeSerials()).replace('[','(').replace(']',')').replace('"','')
-            parameter_name_ids = self.mysqlSelect(f"select distinct(name_id) from qoe_cpe_parameter where serial in {cpe_serials}")
+            qoe_monitoring_id = self.getMonitoringId()
+            parameter_name_ids = self.mysqlSelect(f"select distinct(name_id) from qoe_monitoring_parameter where monitoring_id = {qoe_monitoring_id}")
             parameter_name_ids = [int(x) for x in parameter_name_ids]
             logging.info(f"{self.cn} number of name_id in list {len(parameter_name_ids)}")
             return parameter_name_ids
         except Exception as e:
             logging.error(f'{self.cn} error {e}', exc_info=1)
-        finally:
-            logging.info(f'{self.cn} processed ParameterNameIds')
     
     def getParameterNames(self) -> list:
         try:
@@ -280,25 +290,22 @@ class FTDataProcessor(JsonSettings):
             return parameter_names
         except Exception as e:
             logging.error(f'{self.cn} error {e}', exc_info=1)
-        finally:
-            logging.info(f'{self.cn} processed ParameterNames')
            
     def getKpiNames(self) -> None:
         try:
             logging.info(f'{self.cn} Attempt to update cpeParameterNames in settings.json')
-            final_list = []                        
+            final_list = []
             for parameter in self.getParameterNames():
-                item = {"parameterName": "", "custName": ""}                
-                item["parameterName"] = parameter                
-                final_list.append(item)             
+                item = {"parameterName": "", "custName": ""}
+                item["parameterName"] = parameter
+                final_list.append(item)
             self.updateJson("cpeParameterNames",final_list)
         except Exception as e:
             logging.error(f'{self.cn} error {e}', exc_info=1)
         finally:
-            logging.info(f'{self.cn} updated cpeParameterNames in settings.json')    
+            logging.info(f'{self.cn} updated cpeParameterNames in settings.json')
 
     def getQoeDbValue(self) -> list:
-        
         try:
             values = []
             kpiNames = []
@@ -309,22 +316,23 @@ class FTDataProcessor(JsonSettings):
                 name = param["custName"]                
                 kpiNames.append(name)
 
-            name_ids = self.getParameterNameIds()            
-            for serial in self.getCpeSerials():                                
+            name_ids = self.getParameterNameIds()
+            for serial in self.getCpeSerials():
                 sql_begin = "SELECT serial, created, value, name_id, multiIf("
                 if isDateRange:
                     datesList = self.parseJson("dateRange")
-                    begin, end = datesList[0], datesList[1]                    
+                    begin, end = datesList[0], datesList[1]
                     sql_end = f" FROM {self.qoeSchema}.cpe_data WHERE name_id IN {tuple(name_ids)} AND serial = {serial} AND created >= toDateTime('{begin}') AND created <= toDateTime('{end}') ORDER BY created ASC"
                 else:
                     sql_end = f" FROM {self.qoeSchema}.cpe_data WHERE name_id IN {tuple(name_ids)} AND serial = {serial} AND created >= toDateTime('{self._today()}') ORDER BY created ASC"
-                for name_id, kpi_name in zip(name_ids,kpiNames):          
+                for name_id, kpi_name in zip(name_ids,kpiNames):
                     part = f"name_id = {name_id}, '{kpi_name}',"
                     sql_begin = sql_begin + part
                 sql_begin = sql_begin + " 'Null value') as kpi"
                 sql_full = sql_begin + sql_end
                 logging.info(f'{self.cn} ClickhouseSqlQuery: {sql_full}')
-                kpiValue = self.clickhouseSelect(sql_full)                
+                kpiValue = self.clickhouseSelect(sql_full)
+                logging.info(f'{self.cn} kpiValues: {kpiValue}')
                 values.append(kpiValue)
             return values
         except Exception as e:
@@ -456,7 +464,8 @@ class UserInterface(Report):
         self.Mail = Email()
         self.Ftp = FTP()
 
-    def cli_runner(self) -> None:        
+    def listen(self) -> NoReturn:
+        """CLI listener"""
         try:            
             cli_arg = sys.argv[1]            
             logging.info(f"{self.cn} Received CLI argument: {cli_arg}")
@@ -493,4 +502,4 @@ class UserInterface(Report):
 
 if __name__ == "__main__":
     Interface = UserInterface()
-    Interface.cli_runner()
+    Interface.listen()
