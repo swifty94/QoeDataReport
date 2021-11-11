@@ -252,6 +252,7 @@ class FTDataProcessor(JsonSettings):
             qoe_monitoring_parent = self.mysqlSelect(f"select id from qoe_monitoring_parent where name = '{self.qoename}'")
             par_id = str(qoe_monitoring_parent).replace('[','').replace(']','').replace('\'','')
             par_id = int(par_id)
+
             logging.info(f'{self.cn} qoe_monitoring_parent_id = {par_id}')     
             qoe_monitoring_id = self.mysqlSelect(f"select id from qoe_monitoring where parent_id = {par_id}")
             qoe_monitoring_id = str(qoe_monitoring_id).replace('[','').replace(']','').replace('\'','')
@@ -268,6 +269,7 @@ class FTDataProcessor(JsonSettings):
             qoe_cpe_in_monitor = self.mysqlSelect(f"select cpe_id from qoe_cpe_in_monitor where monitoring_id = {qoe_monitoring_id};")
             cpe_serials = self.mysqlSelect(f"select serial from cpe where id in {tuple(qoe_cpe_in_monitor)};")
             logging.info(f'{self.cn} Serials = {len(cpe_serials)}')
+
             return cpe_serials
         except Exception as e:
             logging.error(f'{self.cn} error {e}', exc_info=1)
