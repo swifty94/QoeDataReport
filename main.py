@@ -246,21 +246,27 @@ class FTDataProcessor(JsonSettings):
             logging.error(f'{self.cn} SQL: \n {query}')    
         finally:
             qoeConnection.close()
-            
-    def getCpeSerials(self) -> list:
+
+    def getMonitoringId(self) -> int:
         try:
-            #
-            # TODO: change logic according to 6.0.50 schema  
-            #         
             qoe_monitoring_parent = self.mysqlSelect(f"select id from qoe_monitoring_parent where name = '{self.qoename}'")
             par_id = str(qoe_monitoring_parent).replace('[','').replace(']','').replace('\'','')
             par_id = int(par_id)
             logging.info(f'{self.cn} id from qoe_monitoring_parent = {par_id}')     
-            qoe_monitoring_id = self.mysqlSelect(f"select group_id from qoe_monitoring where parent_id = {par_id}")
+            qoe_monitoring_id = self.mysqlSelect(f"select id from qoe_monitoring where parent_id = {par_id}")
             qoe_monitoring_id = str(qoe_monitoring_id).replace('[','').replace(']','').replace('\'','')
             qoe_monitoring_id = int(qoe_monitoring_id)
-            logging.info(f'{self.cn} group_id from qoe_monitoring = {qoe_monitoring_id}')
-            cpe_serials = self.mysqlSelect(f"select serial from qoe_cpe where group_id={qoe_monitoring_id};")
+            logging.info(f'{self.cn} monitoring id from qoe_monitoring = {qoe_monitoring_id}')
+            return qoe_monitoring_id
+        except Exception as e:
+            logging.error(f'{self.cn} error {e}', exc_info=1)
+    
+            
+    def getCpeSerials(self) -> list:
+        try:
+            qoe_monitoring_id = self.getMonitoringId()
+            qoe_cpe_in_monitor = self.mysqlSelect(f"select cpe_id from qoe_cpe_in_monitor where monitoring_id = {qoe_monitoring_id};")
+            cpe_serials = self.mysqlSelect(f"select serial from cpe where id={qoe_cpe_in_monitor};")
             logging.info(f'{self.cn} serial from qoe_cpe count = {len(cpe_serials)}')    
             return cpe_serials
         except Exception as e:
@@ -270,8 +276,8 @@ class FTDataProcessor(JsonSettings):
     
     def getParameterNameIds(self) -> list:
         try:
-            cpe_serials = str(self.getCpeSerials()).replace('[','(').replace(']',')').replace('"','')
-            parameter_name_ids = self.mysqlSelect(f"select distinct(name_id) from qoe_cpe_parameter where serial in {cpe_serials}")
+            qoe_monitoring_id = self.getMonitoringId()
+            parameter_name_ids = self.mysqlSelect(f"select distinct(name_id) from qoe_monitoring_parameter where monitoring_id = {qoe_monitoring_id}")
             parameter_name_ids = [int(x) for x in parameter_name_ids]
             logging.info(f"{self.cn} number of name_id in list {len(parameter_name_ids)}")
             return parameter_name_ids
@@ -331,8 +337,9 @@ class FTDataProcessor(JsonSettings):
                     sql_begin = sql_begin + part
                 sql_begin = sql_begin + " 'Null value') as kpi"
                 sql_full = sql_begin + sql_end
-                logging.info(f'{self.cn} ClickhouseSqlQuery: {sql_full}')
-                kpiValue = self.clickhouseSelect(sql_full)                
+                logging.debug(f'{self.cn} ClickhouseSqlQuery: {sql_full}')
+                kpiValue = self.clickhouseSelect(sql_full)
+                logging.info(f'{self.cn} kpiValues: {kpiValue}')        
                 values.append(kpiValue)
             return values
         except Exception as e:
