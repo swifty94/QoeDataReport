@@ -418,7 +418,8 @@ class Report(JsonSettings):
                             for key,value in d.items():
                                 if model_key in d.keys():
                                     val = d[model_key]
-                                    cpeModel[model_key] = val.replace(" ","")
+                                    if isinstance(val, str):
+                                        cpeModel[model_key] = val.replace(" ","")
                 fullDataModel.append(cpeModel)
             
             return fullDataModel
