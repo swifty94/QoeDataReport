@@ -8,6 +8,7 @@ from os import path
 from typing import List, AnyStr, NoReturn, Union
 from datetime import datetime, date
 from clickhouse_driver import connect
+from clickhouse_driver.errors import SocketTimeoutError
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import ftplib
@@ -240,6 +241,9 @@ class FTDataProcessor(JsonSettings):
             dbCursor.execute(query)
             result = dbCursor.fetchall()            
             return result
+        except SocketTimeoutError:
+            logging.warning(f'{self.cn} SocketTimeoutError occured', exc_info=1)
+            pass
         except Exception as e:
             qoeConnection.close()
             logging.error(f'{self.cn} error {e}', exc_info=1)
@@ -324,17 +328,17 @@ class FTDataProcessor(JsonSettings):
                 if isDateRange:
                     datesList = self.parseJson("dateRange")
                     begin, end = datesList[0], datesList[1]
-                    sql_end = f" FROM {self.qoeSchema}.kpi_data WHERE name_id IN {tuple(name_ids)} AND serial = {serial} AND created >= toDateTime('{begin}') AND created <= toDateTime('{end}') ORDER BY created ASC"
+                    sql_end = f" FROM {self.qoeSchema}.cpe_data WHERE name_id IN {tuple(name_ids)} AND serial = {serial} AND created >= toDateTime('{begin}') AND created <= toDateTime('{end}') ORDER BY created ASC"
                 else:
-                    sql_end = f" FROM {self.qoeSchema}.kpi_data WHERE name_id IN {tuple(name_ids)} AND serial = {serial} AND created >= toDateTime('{self._today()}') ORDER BY created ASC"
+                    sql_end = f" FROM {self.qoeSchema}.cpe_data WHERE name_id IN {tuple(name_ids)} AND serial = {serial} AND created >= toDateTime('{self._today()}') ORDER BY created ASC"
                 for name_id, kpi_name in zip(name_ids,kpiNames):
                     part = f"name_id = {name_id}, '{kpi_name}',"
                     sql_begin = sql_begin + part
                 sql_begin = sql_begin + " 'Null value') as kpi"
                 sql_full = sql_begin + sql_end
-                logging.info(f'{self.cn} ClickhouseSqlQuery: {sql_full}')
+                logging.debug(f'{self.cn} ClickhouseSqlQuery: {sql_full}')
                 kpiValue = self.clickhouseSelect(sql_full)
-                logging.info(f'{self.cn} kpiValues: {kpiValue}')
+                logging.info(f'{self.cn} Cpe={serial} kpiValuesLength={len(kpiValue)}')
                 values.append(kpiValue)
             return values
         except Exception as e:
@@ -370,19 +374,21 @@ class Report(JsonSettings):
             FTData = FTDataProcessor()
             dataValues = FTData.getQoeDbValue()
             for item in dataValues:
-                for x in item:
-                    uniq = tuple(uniq)                    
-                    if x[0] not in uniq and x[1] not in uniq and x[2] not in uniq:
-                        uniq += (x[0],)
-                        uniq += (x[1],)
-                        uniq += ({x[4]:x[2]},)
-                    elif x[0] in uniq and x[1] in uniq and x[2] not in uniq:
-                        uniq += ({x[4]:x[2]},)
-                    elif x[0] in uniq and x[1] not in uniq:                        
-                        fullData.append(uniq)
-                        uniq = list(uniq)
-                        uniq[:] = []
-                        continue
+                if item:
+                    for x in item:
+                        uniq = tuple(uniq)                    
+                        if x[0] not in uniq and x[1] not in uniq and x[2] not in uniq:
+                            uniq += (x[0],)
+                            uniq += (x[1],)
+                            uniq += ({x[4]:x[2]},)
+                        elif x[0] in uniq and x[1] in uniq and x[2] not in uniq:
+                            uniq += ({x[4]:x[2]},)
+                        elif x[0] in uniq and x[1] not in uniq:               
+                            fullData.append(uniq)
+                            logging.debug(f'RawDataTupleFromClickHouse = {uniq}')
+                            uniq = list(uniq)
+                            uniq[:] = []
+                            continue
             return fullData
         except Exception as e:
             logging.error(f'{self.cn} error {e}', exc_info=1)        
@@ -415,11 +421,13 @@ class Report(JsonSettings):
                     cpeModel["CollectTime"] = timestamp                    
                     for d in kpis:
                         if type(d) == dict:
-                            for key,value in d.items():
+                            for _ in d.items():
                                 if model_key in d.keys():
                                     val = d[model_key]
                                     if isinstance(val, str):
                                         cpeModel[model_key] = val.replace(" ","")
+                
+                logging.debug(f'cpeDictModelToCsv = {cpeModel}')
                 fullDataModel.append(cpeModel)
             
             return fullDataModel

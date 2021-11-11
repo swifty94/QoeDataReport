@@ -86,6 +86,8 @@ Usage:
 
 - If you want to create several reports simultaneously, you either need to have 2 separate project directories or have 2 separate settings.json files which you'll be switching manually.
 
+- For troubleshooting purposes you may change the logging level in logging.ini file from level=INFO to level=DEBUG which make the application to log additional information about each step of collecting and trasforming the data for the report.
+
 Usage example:
 ---
 <pre>
