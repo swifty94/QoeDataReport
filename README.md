@@ -5,7 +5,7 @@ Automated creating of CSV report using QoE data from FT QoE module.
 
 Installation:
 ---
-- git clone this repo or download as is in zip
+- git clone https://github.com/swifty94/QoeDataReport.git or download it as is via https://github.com/swifty94/QoeDataReport/archive/refs/heads/master.zip
 - unzip on target location
 - run ./install, E.g:
 
