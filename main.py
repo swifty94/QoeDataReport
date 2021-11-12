@@ -255,12 +255,15 @@ class FTDataProcessor(JsonSettings):
         try:
             qoe_monitoring_parent = self.mysqlSelect(f"select id from qoe_monitoring_parent where name = '{self.qoename}'")
             par_id = str(qoe_monitoring_parent).replace('[','').replace(']','').replace('\'','')
-            par_id = int(par_id)
+            if par_id:
+                par_id = int(par_id)
+            else:
+                logging.error(f'{self.cn} QoE monitoring name {self.qoename} does not exist in database')
+                return exit(1)
 
             logging.info(f'{self.cn} qoe_monitoring_parent_id = {par_id}')     
             qoe_monitoring_id = self.mysqlSelect(f"select id from qoe_monitoring where parent_id = {par_id}")
-            qoe_monitoring_id = str(qoe_monitoring_id).replace('[','').replace(']','').replace('\'','')
-            qoe_monitoring_id = int(qoe_monitoring_id)
+            qoe_monitoring_id = int(str(qoe_monitoring_id).replace('[','').replace(']','').replace('\'',''))
             logging.info(f'{self.cn} monitoring id = {qoe_monitoring_id}')
             return qoe_monitoring_id
         except Exception as e:
@@ -271,8 +274,12 @@ class FTDataProcessor(JsonSettings):
         try:
             qoe_monitoring_id = self.getMonitoringId()
             qoe_cpe_in_monitor = self.mysqlSelect(f"select cpe_id from qoe_cpe_in_monitor where monitoring_id = {qoe_monitoring_id};")
-            cpe_serials = self.mysqlSelect(f"select serial from cpe where id in {tuple(qoe_cpe_in_monitor)};")
-            logging.info(f'{self.cn} Serials = {len(cpe_serials)}')
+            if len(qoe_cpe_in_monitor) == 1:
+                qoe_cpe_in_monitor = int(str(qoe_cpe_in_monitor).replace('[','').replace(']','').replace('\'',''))
+                cpe_serials = self.mysqlSelect(f"select serial from cpe where id = {qoe_cpe_in_monitor};")
+            else:
+                cpe_serials = self.mysqlSelect(f"select serial from cpe where id in {tuple(qoe_cpe_in_monitor)};")
+                logging.info(f'{self.cn} Serials = {len(cpe_serials)}')
 
             return cpe_serials
         except Exception as e:
@@ -385,7 +392,7 @@ class Report(JsonSettings):
                             uniq += ({x[4]:x[2]},)
                         elif x[0] in uniq and x[1] not in uniq:               
                             fullData.append(uniq)
-                            logging.debug(f'RawDataTupleFromClickHouse = {uniq}')
+                            logging.debug(f'{self.cn} RawDataTupleFromClickHouse = {uniq}')
                             uniq = list(uniq)
                             uniq[:] = []
                             continue
@@ -415,7 +422,8 @@ class Report(JsonSettings):
                 timestamp = str(i[1])
                 timestamp = timestamp
                 tup_len = len(i)
-                kpis = i[2:tup_len]                
+                kpis = i[2:tup_len]
+                logging.debug(f'{self.cn} createFullDataModel() -> serial={serial} kpis={kpis}')            
                 for model_key in cpeModel.keys():                    
                     cpeModel["ESN"] = serial
                     cpeModel["CollectTime"] = timestamp                    
@@ -424,10 +432,9 @@ class Report(JsonSettings):
                             for _ in d.items():
                                 if model_key in d.keys():
                                     val = d[model_key]
-                                    if isinstance(val, str):
-                                        cpeModel[model_key] = val.replace(" ","")
+                                    cpeModel[model_key] = val
                 
-                logging.debug(f'cpeDictModelToCsv = {cpeModel}')
+                logging.debug(f'{self.cn} cpeDictModelToCsv = {cpeModel}')
                 fullDataModel.append(cpeModel)
             
             return fullDataModel
